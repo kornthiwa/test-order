@@ -1,8 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Pagination } from "../components/Pagination";
-import { OrderFilters, OrderFiltersValue } from "../components/SearchInput";
+import {
+  CategoryOption,
+  OrderFilters,
+  OrderFiltersValue,
+} from "../components/SearchInput";
 import { apiClient } from "../lib/apiClient";
 
 type Grade = "A" | "B" | "C" | "D";
@@ -17,25 +22,27 @@ type GradeRequest = {
 type CategoryRequest = {
   categoryID: string;
   subCategoryID: string;
-  requestList: GradeRequest[];
+  requestList?: GradeRequest[];
 };
 
 type TransactionParty = {
-  roleName: string;
-  name: string;
-  id: string;
+  roleName?: string;
+  name?: string;
+  id?: string;
 };
 
 type Order = {
+  _id?: { $oid: string };
   orderId: string;
-  requestList: CategoryRequest[];
+  requestList?: CategoryRequest[];
   transactionParties?: {
-    customer: TransactionParty;
-    transport: TransactionParty;
-    collector: TransactionParty;
+    customer?: TransactionParty;
+    transport?: TransactionParty;
+    collector?: TransactionParty;
   };
-  orderFinishedDate: string; // YYYY-MM-DD
-  orderFinishedTime: string; // HH:mm
+  orderFinishedDate?: string; // YYYY-MM-DD
+  orderFinishedTime?: string; // HH:mm
+  orderType?: string;
 };
 
 const PAGE_SIZE = 10;
@@ -75,24 +82,28 @@ export default function Orders() {
     void fetchOrders();
   }, []);
 
-  const categories = useMemo(() => {
+  const categories: CategoryOption[] = useMemo(() => {
     const ids = new Set<string>();
     orders.forEach((order) => {
-      order.requestList.forEach((cat) => ids.add(cat.categoryID));
+      (order.requestList ?? []).forEach((cat) => ids.add(cat.categoryID));
     });
-    return Array.from(ids).sort();
+    return Array.from(ids)
+      .sort()
+      .map((id) => ({ id, name: id }));
   }, [orders]);
 
-  const subCategories = useMemo(() => {
+  const subCategories: CategoryOption[] = useMemo(() => {
     const ids = new Set<string>();
     orders.forEach((order) => {
-      order.requestList.forEach((cat) => {
+      (order.requestList ?? []).forEach((cat) => {
         if (!filters.categoryId || cat.categoryID === filters.categoryId) {
           ids.add(cat.subCategoryID);
         }
       });
     });
-    return Array.from(ids).sort();
+    return Array.from(ids)
+      .sort()
+      .map((id) => ({ id, name: id }));
   }, [filters.categoryId, orders]);
 
   const { filteredOrders, totalMatchingItems } = useMemo(() => {
@@ -102,13 +113,12 @@ export default function Orders() {
     let itemsCount = 0;
 
     const result = orders.filter((order) => {
-      if (filters.dateFrom && order.orderFinishedDate < filters.dateFrom)
-        return false;
-      if (filters.dateTo && order.orderFinishedDate > filters.dateTo)
-        return false;
+      const date = order.orderFinishedDate ?? "";
+      if (filters.dateFrom && date < filters.dateFrom) return false;
+      if (filters.dateTo && date > filters.dateTo) return false;
 
       if (filters.orderId) {
-        const target = order.orderId;
+        const target = order.orderId ?? "";
         if (filters.orderIdMatchMode === "exact") {
           if (target !== filters.orderId) return false;
         } else {
@@ -116,16 +126,17 @@ export default function Orders() {
         }
       }
 
+      const requestList = order.requestList ?? [];
       let hasCategoryMatch = true;
       if (filters.categoryId) {
-        hasCategoryMatch = order.requestList.some(
+        hasCategoryMatch = requestList.some(
           (c) => c.categoryID === filters.categoryId,
         );
       }
       if (!hasCategoryMatch) return false;
 
       if (filters.subCategoryId) {
-        const hasSub = order.requestList.some(
+        const hasSub = requestList.some(
           (c) => c.subCategoryID === filters.subCategoryId,
         );
         if (!hasSub) return false;
@@ -133,8 +144,8 @@ export default function Orders() {
 
       let hasItemMatch = false;
 
-      order.requestList.forEach((cat) => {
-        cat.requestList.forEach((item) => {
+      requestList.forEach((cat) => {
+        (cat.requestList ?? []).forEach((item) => {
           if (filters.grade !== "ALL" && item.grade !== filters.grade) {
             return;
           }
@@ -170,8 +181,8 @@ export default function Orders() {
 
   const getDisplayTotalForOrder = (order: Order) => {
     let sum = 0;
-    order.requestList.forEach((cat) => {
-      cat.requestList.forEach((item) => {
+    (order.requestList ?? []).forEach((cat) => {
+      (cat.requestList ?? []).forEach((item) => {
         if (filters.grade !== "ALL" && item.grade !== filters.grade) return;
         sum += item.total;
       });
@@ -245,16 +256,19 @@ export default function Orders() {
               <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                 ผู้ขาย
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
                 รวมยอด (ตามเกรด)
               </th>
+                <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                  การจัดการ
+                </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
             {pageItems.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="px-4 py-6 text-center text-sm text-gray-500"
                 >
                   ไม่พบรายการตามตัวกรอง
@@ -263,7 +277,7 @@ export default function Orders() {
             ) : (
               pageItems.map((order) => {
                 const total = getDisplayTotalForOrder(order);
-                const categoriesLabel = order.requestList
+                const categoriesLabel = (order.requestList ?? [])
                   .map((c) => `${c.categoryID}/${c.subCategoryID}`)
                   .join(", ");
 
@@ -273,13 +287,13 @@ export default function Orders() {
                       {order.orderId}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">
-                      {order.orderFinishedDate} {order.orderFinishedTime}
+                      {order.orderFinishedDate ?? "-"} {order.orderFinishedTime ?? ""}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
                       {categoriesLabel}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">
-                      {order.transactionParties?.customer.name ?? "-"}
+                      {order.transactionParties?.customer?.name ?? "-"}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-gray-900">
                       ฿
@@ -287,6 +301,14 @@ export default function Orders() {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-center text-sm">
+                      <Link
+                        href={`/orders/${order.orderId}`}
+                        className="inline-flex items-center justify-center rounded-md border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+                      >
+                        ดูรายละเอียด
+                      </Link>
                     </td>
                   </tr>
                 );

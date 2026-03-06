@@ -25,7 +25,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div
           style={{
             display: "flex",
-            gap: "10px",
+            gap: "32px",
             fontSize: "16px",
             color: "var(--color-primary)",
           }}

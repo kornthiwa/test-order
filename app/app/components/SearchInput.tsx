@@ -39,10 +39,12 @@ export type OrderFiltersValue = {
   grade: "ALL" | "A" | "B" | "C" | "D";
 };
 
+export type CategoryOption = { id: string; name: string };
+
 type OrderFiltersProps = {
   value: OrderFiltersValue;
-  categories: string[];
-  subCategories: string[];
+  categories: CategoryOption[];
+  subCategories: CategoryOption[];
   onChange: (next: OrderFiltersValue) => void;
   onApply: () => void;
   onReset: () => void;
@@ -90,9 +92,7 @@ export function OrderFilters({
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-gray-700">
-          หมวดหมู่ (categoryId)
-        </label>
+        <label className="text-xs font-medium text-gray-700">หมวดหมู่</label>
         <select
           value={value.categoryId}
           onChange={(e) => {
@@ -102,9 +102,9 @@ export function OrderFilters({
           className="rounded-md border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
         >
           <option value="">ทั้งหมด</option>
-          {categories.map((id) => (
-            <option key={id} value={id}>
-              {id}
+          {categories.map((cat, i) => (
+            <option key={`cat-${i}-${cat.id}`} value={cat.id}>
+              {cat.name}
             </option>
           ))}
         </select>
@@ -112,7 +112,7 @@ export function OrderFilters({
 
       <div className="flex flex-col gap-1">
         <label className="text-xs font-medium text-gray-700">
-          หมวดหมู่ย่อย (subCategoryId)
+          หมวดหมู่ย่อย
         </label>
         <select
           value={value.subCategoryId}
@@ -121,9 +121,9 @@ export function OrderFilters({
           disabled={subCategories.length === 0}
         >
           <option value="">ทั้งหมด</option>
-          {subCategories.map((id) => (
-            <option key={id} value={id}>
-              {id}
+          {subCategories.map((sub, i) => (
+            <option key={`sub-${i}-${sub.id}`} value={sub.id}>
+              {sub.name}
             </option>
           ))}
         </select>
@@ -173,9 +173,7 @@ export function OrderFilters({
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-gray-700">
-          ราคาสุดท้าย
-        </label>
+        <label className="text-xs font-medium text-gray-700">ราคาสุดท้าย</label>
         <SearchInput
           type="number"
           value={value.priceMax}
@@ -224,4 +222,3 @@ export function OrderFilters({
     </div>
   );
 }
-
