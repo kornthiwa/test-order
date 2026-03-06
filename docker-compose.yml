@@ -8,5 +8,37 @@ services:
     volumes:
       - mongodb_data:/data/db
 
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: order-api
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      MONGODB_URI: mongodb://mongodb:27017/order
+    ports:
+      - "3001:3001"
+
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:3001
+    container_name: order-app
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "3000:3000"
+
 volumes:
   mongodb_data:
