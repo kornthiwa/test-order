@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateSubCategoryDto } from './dto/create-sub-category.dto';
+import { ListSubCategoryQuery } from './dto/list-sub-category-query.dto';
 import { UpdateSubCategoryDto } from './dto/update-sub-category.dto';
 import {
   SubCategory,
@@ -19,8 +20,38 @@ export class SubCategoryService {
     return this.subCategoryModel.create(createSubCategoryDto);
   }
 
-  findAll() {
-    return this.subCategoryModel.find().exec();
+  findAll(query?: ListSubCategoryQuery) {
+    const match: Record<string, unknown> = {};
+
+    if (query?.categoryId) {
+      match.categoryId = query.categoryId;
+    }
+    if (query?.subCategoryId) {
+      match.subCategoryId = query.subCategoryId;
+    }
+
+    return this.subCategoryModel
+      .aggregate([
+        Object.keys(match).length ? { $match: match } : { $match: {} },
+        { $sort: { categoryId: 1, subCategoryId: 1 } },
+        {
+          $lookup: {
+            from: 'categories',
+            localField: 'categoryId',
+            foreignField: 'categoryId',
+            as: 'category',
+          },
+        },
+        {
+          $addFields: {
+            categoryName: {
+              $ifNull: [{ $arrayElemAt: ['$category.categoryName', 0] }, null],
+            },
+          },
+        },
+        { $project: { category: 0 } },
+      ])
+      .exec();
   }
 
   findOne(id: string) {

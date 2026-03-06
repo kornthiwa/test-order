@@ -11,8 +11,9 @@ export class SubCategory {
   @Prop({ required: true })
   subCategoryName: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, index: true })
   categoryId: string;
 }
 
 export const SubCategorySchema = SchemaFactory.createForClass(SubCategory);
+SubCategorySchema.index({ categoryId: 1, subCategoryId: 1 });

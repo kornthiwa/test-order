@@ -6,9 +6,11 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { SubCategoryService } from './sub-category.service';
 import { CreateSubCategoryDto } from './dto/create-sub-category.dto';
+import { ListSubCategoryQuery } from './dto/list-sub-category-query.dto';
 import { UpdateSubCategoryDto } from './dto/update-sub-category.dto';
 
 @Controller('sub-category')
@@ -21,8 +23,12 @@ export class SubCategoryController {
   }
 
   @Get()
-  findAll() {
-    return this.subCategoryService.findAll();
+  findAll(@Query() query: Record<string, string>) {
+    const q: ListSubCategoryQuery = {
+      categoryId: query.categoryId || undefined,
+      subCategoryId: query.subCategoryId || undefined,
+    };
+    return this.subCategoryService.findAll(q);
   }
 
   @Get(':id')

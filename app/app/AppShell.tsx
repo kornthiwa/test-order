@@ -38,6 +38,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             Orders
           </Link>
           <Link
+            href="/orders/summary"
+            className="relative bg-transparent border-none py-1 cursor-pointer text-inherit font-inherit focus:outline-none hover:text-[color:var(--color-primary)] after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:w-0 after:rounded-full after:bg-[color:var(--color-primary)] after:transition-[width] after:duration-150 hover:after:w-full"
+          >
+            Summary
+          </Link>
+          <Link
             href="/category"
             className="relative bg-transparent border-none py-1 cursor-pointer text-inherit font-inherit focus:outline-none hover:text-[color:var(--color-primary)] after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:w-0 after:rounded-full after:bg-[color:var(--color-primary)] after:transition-[width] after:duration-150 hover:after:w-full"
           >
@@ -51,9 +57,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
       </nav>
-      <main className="flex-1 px-8 pt-6 pb-10 max-w-5xl w-full mx-auto">
-        {children}
-      </main>
+      <main className="flex-1 px-8 pt-6 pb-10  w-full mx-auto">{children}</main>
     </div>
   );
 }

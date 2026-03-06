@@ -30,6 +30,7 @@ export function SearchInput({
 export type OrderFiltersValue = {
   dateFrom: string;
   dateTo: string;
+  orderType: "" | "buy" | "sell";
   categoryId: string;
   subCategoryId: string;
   orderId: string;
@@ -92,12 +93,36 @@ export function OrderFilters({
       </div>
 
       <div className="flex flex-col gap-1">
+        <label className="text-xs font-medium text-gray-700">
+          ประเภท (Type)
+        </label>
+        <select
+          value={value.orderType}
+          onChange={(e) =>
+            handleFieldChange(
+              "orderType",
+              e.target.value as OrderFiltersValue["orderType"],
+            )
+          }
+          className="rounded-md border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+        >
+          <option value="">ทั้งหมด</option>
+          <option value="buy">buy</option>
+          <option value="sell">sell</option>
+        </select>
+      </div>
+
+      <div className="flex flex-col gap-1">
         <label className="text-xs font-medium text-gray-700">หมวดหมู่</label>
         <select
           value={value.categoryId}
           onChange={(e) => {
-            handleFieldChange("categoryId", e.target.value);
-            handleFieldChange("subCategoryId", "");
+            const nextCategoryId = e.target.value;
+            onChange({
+              ...value,
+              categoryId: nextCategoryId,
+              subCategoryId: "",
+            });
           }}
           className="rounded-md border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
         >
@@ -207,9 +232,9 @@ export function OrderFilters({
         <button
           type="button"
           onClick={onApply}
-          className="inline-flex flex-1 items-center justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700"
+          className="inline-flex flex-1 items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary/80"
         >
-          ใช้ตัวกรองและเรียก API
+          ค้นหา
         </button>
         <button
           type="button"
